@@ -7,6 +7,8 @@
  import {OrbitControls} from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/examples/jsm/controls/OrbitControls.js';
  import {GUI} from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r135/examples/jsm/libs/lil-gui.module.min.js';
 
+ import {Animator} from './animator.js';
+ import {Selector} from './selector.js';
  import {createScene, createTrajectory} from './system.js';
 
  function downloadDataUri(name, uri) {
@@ -60,6 +62,7 @@
      } else if (system.config.frozen?.position?.y) {
        this.camera.position.set(0, 1, 2);
      } else {
+       console.log("FIXED POSITION");
        this.camera.position.set(5, 2, 8);
      }
      this.camera.follow = true;
@@ -112,8 +115,8 @@
          .max(50);
 
      /* set up animator and load trajectory */
-    //  this.animator = new Animator(this);
-    //  this.animator.load(this.trajectory, {});
+     this.animator = new Animator(this);
+     this.animator.load(this.trajectory, {});
 
      /* add body insepctors */
      const bodiesFolder = this.gui.addFolder('Bodies');
@@ -148,18 +151,18 @@
      this.gui.close();
 
      /* set up body selector */
-    //  this.selector = new Selector(this);
-    //  this.selector.addEventListener(
-    //      'hoveron', (evt) => this.setHover(evt.object, true));
-    //  this.selector.addEventListener(
-    //      'hoveroff', (evt) => this.setHover(evt.object, false));
-    //  this.selector.addEventListener(
-    //      'select', (evt) => this.setSelected(evt.object, true));
-    //  this.selector.addEventListener(
-    //      'deselect', (evt) => this.setSelected(evt.object, false));
+     this.selector = new Selector(this);
+     this.selector.addEventListener(
+         'hoveron', (evt) => this.setHover(evt.object, true));
+     this.selector.addEventListener(
+         'hoveroff', (evt) => this.setHover(evt.object, false));
+     this.selector.addEventListener(
+         'select', (evt) => this.setSelected(evt.object, true));
+     this.selector.addEventListener(
+         'deselect', (evt) => this.setSelected(evt.object, false));
 
-    //  this.defaultTarget = this.selector.selectable[0];
-    //  this.target = this.defaultTarget;
+     this.defaultTarget = this.selector.selectable[0];
+     this.target = this.defaultTarget;
 
      /* get ready to render first frame */
      this.setDirty();
@@ -211,7 +214,7 @@
 
    animate() {
      requestAnimationFrame(() => this.animate());
-    //  this.animator.update();
+     this.animator.update();
 
      // make sure the orbiter is pointed at the right target
      const targetPos = new THREE.Vector3();

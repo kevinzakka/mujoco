@@ -127,9 +127,9 @@ function createMesh(mesh_config, geom, mat) {
 function createScene(system) {
   const scene = new THREE.Scene();
   const meshGeoms = {};
-  system.config.meshGeometries.forEach(function(geom) {
-    meshGeoms[geom.name] = geom;
-  });
+  // system.config.meshGeometries.forEach(function(geom) {
+  //   meshGeoms[geom.name] = geom;
+  // });
   system.config.bodies.forEach(function(body) {
     const parent = new THREE.Group();
     parent.name = body.name.replaceAll('/', '_');  // sanitize node name
