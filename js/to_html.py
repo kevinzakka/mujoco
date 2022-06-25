@@ -1,10 +1,10 @@
 import json
+from dataclasses import dataclass
 from typing import Sequence
+
 import mujoco
 import numpy as np
-from dataclasses import dataclass
 from google.protobuf import json_format
-
 
 _HTML = """
 <html>
@@ -39,12 +39,12 @@ _HTML = """
 
 @dataclass(frozen=True)
 class CartesianPose:
-  xpos: np.ndarray
-  xquat: np.ndarray
+    xpos: np.ndarray
+    xquat: np.ndarray
 
-  @staticmethod
-  def from_mjdata(data: mujoco.MjData) -> "CartesianPose":
-    return CartesianPose(data.xpos.copy(), data.xquat.copy())
+    @staticmethod
+    def from_mjdata(data: mujoco.MjData) -> "CartesianPose":
+        return CartesianPose(data.xpos.copy(), data.xquat.copy())
 
 
 def render(
@@ -54,11 +54,11 @@ def render(
 ) -> str:
     """Returns an HTML page that visualizes the system and its configuration."""
     d = {
-      "config": json_format.MessageToDict(config, True),
-      "pos": [frame.xpos.tolist() for frame in frames],
-      "rot": [frame.xquat.tolist() for frame in frames],
+        "config": json_format.MessageToDict(config, True),
+        "pos": [frame.xpos.tolist() for frame in frames],
+        "rot": [frame.xquat.tolist() for frame in frames],
     }
     system = json.dumps(d)
-    html = _HTML.replace('<!-- system json goes here -->', system)
-    html = html.replace('<!-- viewer height goes here -->', f'{height}px')
+    html = _HTML.replace("<!-- system json goes here -->", system)
+    html = html.replace("<!-- viewer height goes here -->", f"{height}px")
     return html
