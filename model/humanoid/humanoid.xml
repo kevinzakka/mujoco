@@ -53,7 +53,7 @@
     <map force="0.1" zfar="30"/>
     <rgba haze="0.15 0.25 0.35 1"/>
     <quality shadowsize="4096"/>
-    <global offwidth="800" offheight="800"/>
+    <global offwidth="2000" offheight="2000"/>
   </visual>
 
   <worldbody>

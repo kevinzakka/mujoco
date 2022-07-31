@@ -1689,6 +1689,10 @@ void mjv_updateCamera(const mjModel* m, mjData* d, mjvCamera* cam, mjvScene* scn
     ipd = m->vis.global.ipd;
     fovy = m->vis.global.fovy;
 
+    if (m->vis.global.flipvertical) {
+      fovy = -fovy;
+    }
+
     // move lookat for tracking
     if (cam->type==mjCAMERA_TRACKING) {
       // get id and check

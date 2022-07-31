@@ -1569,6 +1569,7 @@ void mjr_makeContext_offSize(const mjModel* m, mjrContext* con, int fontscale,
   con->fogRGBA[3] = m->vis.rgba.fog[3];
   con->lineWidth = m->vis.global.linewidth;
   con->shadowSize = m->vis.quality.shadowsize;
+  con->flipVertical = m->vis.global.flipvertical;
 
   // set fog parameters (model-dependent)
   glFogi(GL_FOG_MODE, GL_LINEAR);

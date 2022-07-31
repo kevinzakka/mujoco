@@ -75,7 +75,8 @@ static const char* MJCF[nMJCF][mjXATTRNUM] = {
 
     {"visual", "*", "0"},
     {"<"},
-        {"global", "?", "6", "fovy", "ipd", "linewidth", "glow", "offwidth", "offheight"},
+        {"global", "?", "7", "fovy", "ipd", "linewidth", "glow", "offwidth",
+            "offheight", "flipvertical"},
         {"quality", "?", "5", "shadowsize", "offsamples", "numslices", "numstacks",
             "numquads"},
         {"headlight", "?", "4", "ambient", "diffuse", "specular", "active"},
@@ -1991,6 +1992,7 @@ void mjXReader::Visual(XMLElement* section) {
       ReadAttr(elem,    "glow",      1, &vis->global.glow,      text);
       ReadAttrInt(elem, "offwidth",     &vis->global.offwidth);
       ReadAttrInt(elem, "offheight",    &vis->global.offheight);
+      ReadAttrInt(elem, "flipvertical",    &vis->global.flipvertical);
     }
 
     // quality sub-element

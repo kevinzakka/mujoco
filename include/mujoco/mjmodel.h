@@ -423,6 +423,7 @@ struct mjVisual_ {                // visualization options
     float glow;                   // glow coefficient for selected body
     int offwidth;                 // width of offscreen buffer
     int offheight;                // height of offscreen buffer
+    int flipvertical;             // flip image vertically
   } global;
 
   struct {                        // rendering quality

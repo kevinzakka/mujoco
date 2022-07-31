@@ -81,6 +81,7 @@ struct mjrContext_ {              // custom OpenGL context
   int offWidth;                   // width of offscreen buffer
   int offHeight;                  // height of offscreen buffer
   int offSamples;                 // number of offscreen buffer multisamples
+  int flipVertical;              // flip image vertically
 
   // parameters specified at creation
   int fontScale;                  // font scale
