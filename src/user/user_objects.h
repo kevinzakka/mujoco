@@ -783,7 +783,7 @@ class mjCTendon : public mjCBase {
   // variables set by user
   int group;                      // group for visualization
   std::string material;           // name of material for rendering
-  int limited;                    // does tendon have limits
+  bool limited;                   // does tendon have limits
   double width;                   // width for rendering
   mjtNum solref_limit[mjNREF];    // solver reference: tendon limits
   mjtNum solimp_limit[mjNIMP];    // solver impedance: tendon limits
@@ -843,9 +843,9 @@ class mjCActuator : public mjCBase {
  public:
   // variables set by user or API
   int group;                      // group for visualization
-  int ctrllimited;                // are control limits defined
-  int forcelimited;               // are force limits defined
-  int actlimited;                 // are activation limits defined
+  bool ctrllimited;               // are control limits defined
+  bool forcelimited;              // are force limits defined
+  bool actlimited;                // are activation limits defined
   mjtDyn dyntype;                 // dynamics type
   mjtTrn trntype;                 // transmission type
   mjtGain gaintype;               // gain type

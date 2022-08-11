@@ -797,7 +797,7 @@ mjCJoint::mjCJoint(mjCModel* _model, mjCDef* _def) {
   group = 0;
   mjuu_setvec(pos, 0, 0, 0);
   mjuu_setvec(axis, 0, 0, 1);
-  limited = 2;
+  limited = false;
   stiffness = 0;
   range[0] = 0;
   range[1] = 0;
@@ -851,16 +851,8 @@ int mjCJoint::Compile(void) {
     }
   }
 
-  if (limited==2) {
-    if (range[0]==0 && range[1]==0) {
-      limited = 0;
-    } else {
-      limited = 1;
-    }
-  }
-
   // resolve limits
-  if (limited == 1) {
+  if (limited) {
     // check data
     if (range[0]>=range[1] && type!=mjJNT_BALL) {
       throw mjCError(this,
@@ -2983,7 +2975,7 @@ mjCTendon::mjCTendon(mjCModel* _model, mjCDef* _def) {
   group = 0;
   material.clear();
   width = 0.003;
-  limited = 2;
+  limited = false;
   range[0] = 0;
   range[1] = 0;
   mj_defaultSolRefImp(solref_limit, solimp_limit);
@@ -3213,14 +3205,6 @@ void mjCTendon::Compile(void) {
     }
   }
 
-  if (limited==2) {
-    if (range[0]==0 && range[1]==0) {
-      limited = 0;
-    } else {
-      limited = 1;
-    }
-  }
-
   // check limits
   if (range[0]>=range[1] && limited) {
     throw mjCError(this, "invalid limits in tendon '%s (id = %d)'", name.c_str(), id);
@@ -3333,9 +3317,9 @@ void mjCWrap::Compile(void) {
 mjCActuator::mjCActuator(mjCModel* _model, mjCDef* _def) {
   // actuator defaults
   group = 0;
-  ctrllimited = 2;
-  forcelimited = 2;
-  actlimited = 2;
+  ctrllimited = false;
+  forcelimited = false;
+  actlimited = false;
   trntype = mjTRN_UNDEFINED;
   dyntype = mjDYN_NONE;
   gaintype = mjGAIN_FIXED;
@@ -3381,28 +3365,6 @@ void mjCActuator::Compile(void) {
                    name.c_str(), id);
   }
   userdata.resize(model->nuser_actuator);
-
-  if (forcelimited==2) {
-    if (forcerange[0]==0 && forcerange[1]==0) {
-      forcelimited = 0;
-    } else {
-      forcelimited = 1;
-    }
-  }
-  if (ctrllimited==2) {
-    if (ctrlrange[0]==0 && ctrlrange[1]==0) {
-      ctrllimited = 0;
-    } else {
-      ctrllimited = 1;
-    }
-  }
-  if (actlimited==2) {
-    if (actrange[0]==0 && actrange[1]==0) {
-      actlimited = 0;
-    } else {
-      actlimited = 1;
-    }
-  }
 
   // check limits
   if (forcerange[0]>=forcerange[1] && forcelimited) {
@@ -3475,7 +3437,7 @@ void mjCActuator::Compile(void) {
     if (pjnt->urdfeffort>0) {
       forcerange[0] = -pjnt->urdfeffort;
       forcerange[1] = pjnt->urdfeffort;
-      forcelimited = 1;
+      forcelimited = true;
     }
     break;
 

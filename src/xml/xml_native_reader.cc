@@ -20,6 +20,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include <mujoco/mjmodel.h>
 #include <mujoco/mjvisualize.h>
@@ -1092,23 +1093,12 @@ void mjXReader::OneJoint(XMLElement* elem, mjCJoint* pjoint) {
   if (MapValue(elem, "type", &n, joint_map, joint_sz)) {
     pjoint->type = (mjtJoint)n;
   }
-
-  // no limit, no range -> [-pi, pi], "unlimited"
-  // no limit, range -> [range[0], range[1]], "limited"
-  // limit, range -> [range[0], range[1]], "limited"
-  // limit, no range -> error
-  // int hasrange = ReadAttr(elem, "range", 2, pjoint->range, text);
-  // if (MapValue(elem, "limited", &pjoint->limited, TFAuto_map, 3)) {
-  //   if (pjoint->limited == 2) {
-  //     pjoint->limited = hasrange;
-  //   }
-  // }
-
+  if (ReadAttr(elem, "range", 2, pjoint->range, text)) {
+    pjoint->limited = true;
+  }
   if (MapValue(elem, "limited", &n, bool_map, 2)) {
     pjoint->limited = (n==1);
   }
-  ReadAttr(elem, "range", 2, pjoint->range, text);
-
   ReadAttrInt(elem, "group", &pjoint->group);
   ReadAttr(elem, "solreflimit", mjNREF, pjoint->solref_limit, text, false, false);
   ReadAttr(elem, "solimplimit", mjNIMP, pjoint->solimp_limit, text, false, false);
@@ -1373,6 +1363,9 @@ void mjXReader::OneTendon(XMLElement* elem, mjCTendon* pten) {
   ReadAttrTxt(elem, "class", pten->classname);
   ReadAttrInt(elem, "group", &pten->group);
   ReadAttrTxt(elem, "material", pten->material);
+  if (ReadAttr(elem, "range", 2, pten->range, text)) {
+    pten->limited = true;
+  }
   if (MapValue(elem, "limited", &n, bool_map, 2)) {
     pten->limited = (n==1);
   }
@@ -1381,7 +1374,6 @@ void mjXReader::OneTendon(XMLElement* elem, mjCTendon* pten) {
   ReadAttr(elem, "solimplimit", mjNIMP, pten->solimp_limit, text, false, false);
   ReadAttr(elem, "solreffriction", mjNREF, pten->solref_friction, text, false, false);
   ReadAttr(elem, "solimpfriction", mjNIMP, pten->solimp_friction, text, false, false);
-  ReadAttr(elem, "range", 2, pten->range, text);
   ReadAttr(elem, "margin", 1, &pten->margin, text);
   ReadAttr(elem, "stiffness", 1, &pten->stiffness, text);
   ReadAttr(elem, "damping", 1, &pten->damping, text);
@@ -1402,7 +1394,6 @@ void mjXReader::OneActuator(XMLElement* elem, mjCActuator* pact) {
   int n;
   string text, type;
   double diameter;
-  int hasrange;
 
   // common attributes
   ReadAttrTxt(elem, "name", pact->name);
@@ -1410,24 +1401,23 @@ void mjXReader::OneActuator(XMLElement* elem, mjCActuator* pact) {
   ReadAttrInt(elem, "group", &pact->group);
   ReadAttr(elem, "lengthrange", 2, pact->lengthrange, text);
   ReadAttr(elem, "gear", 6, pact->gear, text, false, false);
-
-  hasrange = ReadAttr(elem, "ctrlrange", 2, pact->ctrlrange, text);
-  if (MapValue(elem, "ctrllimited", &pact->ctrllimited, TFAuto_map, 3)) {
-    if (pact->ctrllimited == 2) {
-      pact->ctrllimited = hasrange;
-    }
+  if (ReadAttr(elem, "ctrlrange", 2, pact->ctrlrange, text)) {
+    pact->ctrllimited = true;
   }
-  hasrange = ReadAttr(elem, "forcerange", 2, pact->forcerange, text);
-  if (MapValue(elem, "forcelimited", &pact->forcelimited, TFAuto_map, 3)) {
-    if (pact->forcelimited == 2) {
-      pact->forcelimited = hasrange;
-    }
+  if (MapValue(elem, "ctrllimited", &n, bool_map, 2)) {
+    pact->ctrllimited = (n==1);
   }
-  hasrange = ReadAttr(elem, "actrange", 2, pact->actrange, text);
-  if (MapValue(elem, "actlimited", &pact->actlimited, TFAuto_map, 3)) {
-    if (pact->actlimited == 2) {
-      pact->actlimited = hasrange;
-    }
+  if (ReadAttr(elem, "forcerange", 2, pact->forcerange, text)) {
+    pact->forcelimited = true;
+  }
+  if (MapValue(elem, "forcelimited", &n, bool_map, 2)) {
+    pact->forcelimited = (n==1);
+  }
+  if (ReadAttr(elem, "actrange", 2, pact->actrange, text)) {
+    pact->actlimited = true;
+  }
+  if (MapValue(elem, "actlimited", &n, bool_map, 2)) {
+    pact->actlimited = (n==1);
   }
 
   // transmission target and type
@@ -1751,6 +1741,9 @@ void mjXReader::OneComposite(XMLElement* elem, mjCBody* pbody, mjCDef* def) {
     ReadAttr(ejnt, "solimpfix", mjNIMP, comp.def[kind].equality.solimp, text, false, false);
 
     // joint attributes
+    if (ReadAttr(ejnt, "range", 2, comp.def[kind].joint.range, text)) {
+      comp.def[kind].joint.limited = true;
+    }
     if (MapValue(ejnt, "limited", &n, bool_map, 2)) {
       comp.def[kind].joint.limited = (n==1);
     }
@@ -1762,7 +1755,6 @@ void mjXReader::OneComposite(XMLElement* elem, mjCBody* pbody, mjCDef* def) {
     ReadAttr(ejnt,
              "solimpfriction", mjNIMP, comp.def[kind].joint.solimp_friction, text, false, false);
     ReadAttr(ejnt, "stiffness", 1, &comp.def[kind].joint.stiffness, text);
-    ReadAttr(ejnt, "range", 2, comp.def[kind].joint.range, text);
     ReadAttr(ejnt, "margin", 1, &comp.def[kind].joint.margin, text);
     ReadAttr(ejnt, "armature", 1, &comp.def[kind].joint.armature, text);
     ReadAttr(ejnt, "damping", 1, &comp.def[kind].joint.damping, text);
@@ -1785,6 +1777,9 @@ void mjXReader::OneComposite(XMLElement* elem, mjCBody* pbody, mjCDef* def) {
     ReadAttr(eten, "solimpfix", mjNIMP, comp.def[kind].equality.solimp, text, false, false);
 
     // tendon attributes
+    if (ReadAttr(eten, "range", 2, comp.def[kind].tendon.range, text)) {
+      comp.def[kind].tendon.limited = true;
+    }
     if (MapValue(eten, "limited", &n, bool_map, 2)) {
       comp.def[kind].tendon.limited = (n==1);
     }
@@ -1795,7 +1790,6 @@ void mjXReader::OneComposite(XMLElement* elem, mjCBody* pbody, mjCDef* def) {
              "solreffriction", mjNREF, comp.def[kind].tendon.solref_friction, text, false, false);
     ReadAttr(eten,
              "solimpfriction", mjNIMP, comp.def[kind].tendon.solimp_friction, text, false, false);
-    ReadAttr(eten, "range", 2, comp.def[kind].tendon.range, text);
     ReadAttr(eten, "margin", 1, &comp.def[kind].tendon.margin, text);
     ReadAttr(eten, "stiffness", 1, &comp.def[kind].tendon.stiffness, text);
     ReadAttr(eten, "damping", 1, &comp.def[kind].tendon.damping, text);
