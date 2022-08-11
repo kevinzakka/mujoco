@@ -1093,12 +1093,21 @@ void mjXReader::OneJoint(XMLElement* elem, mjCJoint* pjoint) {
     pjoint->type = (mjtJoint)n;
   }
 
-  int hasrange = ReadAttr(elem, "range", 2, pjoint->range, text);
-  if (MapValue(elem, "limited", &pjoint->limited, TFAuto_map, 3)) {
-    if (pjoint->limited == 2) {
-      pjoint->limited = hasrange;
-    }
+  // no limit, no range -> [-pi, pi], "unlimited"
+  // no limit, range -> [range[0], range[1]], "limited"
+  // limit, range -> [range[0], range[1]], "limited"
+  // limit, no range -> error
+  // int hasrange = ReadAttr(elem, "range", 2, pjoint->range, text);
+  // if (MapValue(elem, "limited", &pjoint->limited, TFAuto_map, 3)) {
+  //   if (pjoint->limited == 2) {
+  //     pjoint->limited = hasrange;
+  //   }
+  // }
+
+  if (MapValue(elem, "limited", &n, bool_map, 2)) {
+    pjoint->limited = (n==1);
   }
+  ReadAttr(elem, "range", 2, pjoint->range, text);
 
   ReadAttrInt(elem, "group", &pjoint->group);
   ReadAttr(elem, "solreflimit", mjNREF, pjoint->solref_limit, text, false, false);

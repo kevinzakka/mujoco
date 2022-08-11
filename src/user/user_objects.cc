@@ -860,7 +860,7 @@ int mjCJoint::Compile(void) {
   }
 
   // resolve limits
-  if (limited) {
+  if (limited == 1) {
     // check data
     if (range[0]>=range[1] && type!=mjJNT_BALL) {
       throw mjCError(this,

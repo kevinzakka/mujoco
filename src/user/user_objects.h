@@ -228,7 +228,7 @@ class mjCJoint : public mjCBase {
   // variables set by user: joint properties
   mjtJoint type;                  // type of Joint
   int group;                      // used for rendering
-  int limited;                   // does joint have limits
+  bool limited;                   // does joint have limits
   double pos[3];                  // anchor position
   double axis[3];                 // joint axis
   double stiffness;               // stiffness coefficient
