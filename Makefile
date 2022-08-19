@@ -73,7 +73,7 @@ all:
 install: all
 	@cd ${BUILD_DIR}; cmake --install .
 
-run: all
+run: install
 	@cd $(BIN_DIR); ./${EXEC} $(MODEL)
 
 clean:
