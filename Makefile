@@ -10,6 +10,10 @@ BIN_DIR=$(INSTALL_DIR)/bin
 TEST_DIR=$(INSTALL_DIR)/test
 DOC_DIR=$(INSTALL_DIR)/doc
 
+# Option default values.
+release=0
+model=
+
 # Detect OS.
 ifeq ($(OS),Windows_NT)
 	OS = windows
@@ -25,7 +29,7 @@ else
 endif
 
 # OS-specific settings.
-CMAKE_ARGS := -G Ninja
+CMAKE_ARGS:=-G Ninja
 ifeq ($(OS),windows)
 	CMAKE_ARGS += -DCMAKE_C_COMPILER:STRING=clang -DCMAKE_CXX_COMPILER:STRING=clang++
 else ifeq ($(OS),macos)
@@ -44,7 +48,7 @@ endif
 # Targets
 # ========================= #
 
-.PHONY: help printvars clean test run install all
+.PHONY: help print clean test run install all
 
 default: help
 
@@ -57,15 +61,15 @@ help:
 	@echo "  run:       Build and run the simulate executable (debug mode)"
 	@echo "  test:      Run unit tests (debug mode)"
 	@echo "  clean:     Delete build and bin directories"
-	@echo "  printvars: Print Makefile variables for debugging"
+	@echo "  print:     Print Makefile variables for debugging"
 	@echo "  help:      Print this message"
 	@echo
 	@echo "Available options:"
-	@echo "  RELEASE=1       Execute above targets in release configuration"
-	@echo "  MODEL           Absolute path to model to run in simulate executable"
+	@echo "  release=1       Execute above targets in release configuration"
+	@echo "  model           Absolute path to the model to pass to the simulate executable"
 
 all:
-	mkdir -p ${BUILD_DIR}; \
+	@mkdir -p ${BUILD_DIR}; \
 	cd ${BUILD_DIR}; \
 	cmake .. -DCMAKE_BUILD_TYPE:STRING=$(BUILD_TYPE) -DCMAKE_INTERPROCEDURAL_OPTIMIZATION:BOOL=ON -DCMAKE_INSTALL_PREFIX:PATH=$(INSTALL_DIR) -DMUJOCO_HARDEN:BOOL=ON $(CMAKE_ARGS); \
 	cmake --build . --config=$(BUILD_TYPE)
@@ -74,7 +78,7 @@ install: all
 	@cd ${BUILD_DIR}; cmake --install .
 
 run: install
-	@cd $(BIN_DIR); ./${EXEC} $(MODEL)
+	@cd $(BIN_DIR); ./${EXEC} $(model)
 
 clean:
 	@rm -rf ${BUILD_DIR} ${INSTALL_DIR}
@@ -82,7 +86,6 @@ clean:
 test: all
 	@cd ${BUILD_DIR}; ctest -C $(BUILD_TYPE) --output-on-failure .
 
-
-printvars:
+print:
 	@echo "OS: $(OS)"
 	@echo "CMAKE_ARGS: $(CMAKE_ARGS)"
