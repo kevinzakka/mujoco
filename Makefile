@@ -25,12 +25,12 @@ else
 endif
 
 # OS-specific settings.
+CMAKE_ARGS := -G Ninja
 ifeq ($(OS),windows)
-	CMAKE_ARGS := -G Ninja -DCMAKE_C_COMPILER:STRING=clang -DCMAKE_CXX_COMPILER:STRING=clang++
+	CMAKE_ARGS += -DCMAKE_C_COMPILER:STRING=clang -DCMAKE_CXX_COMPILER:STRING=clang++
 else ifeq ($(OS),macos)
-	CMAKE_ARGS := -G Ninja -DCMAKE_C_FLAGS:STRING=-mcpu=apple-m1+crypto+fp+simd -DCMAKE_CXX_FLAGS:STRING=-mcpu=apple-m1+crypto+fp+simd -DCMAKE_OSX_ARCHITECTURES:STRING=x86_64;arm64 -DMUJOCO_BUILD_MACOS_FRAMEWORKS:BOOL=ON
 else ifeq ($(OS),linux)
-	CMAKE_ARGS := -G Ninja -DCMAKE_C_COMPILER:STRING=clang -DCMAKE_CXX_COMPILER:STRING=clang++
+	CMAKE_ARGS += -DCMAKE_C_COMPILER:STRING=clang -DCMAKE_CXX_COMPILER:STRING=clang++
 endif
 
 # Debug/Release settings.
@@ -43,8 +43,6 @@ endif
 # ========================= #
 # Targets
 # ========================= #
-
-.ONESHELL:
 
 .PHONY: help printvars clean test run install all
 
@@ -67,25 +65,22 @@ help:
 	@echo "  MODEL           Absolute path to model to run in simulate executable"
 
 all:
-	@mkdir -p ${BUILD_DIR}
-	@cd ${BUILD_DIR}
-	cmake .. -DCMAKE_BUILD_TYPE:STRING=$(BUILD_TYPE) -DCMAKE_INTERPROCEDURAL_OPTIMIZATION:BOOL=ON -DCMAKE_INSTALL_PREFIX:PATH=$(INSTALL_DIR) -DMUJOCO_HARDEN:BOOL=ON $(CMAKE_ARGS)
+	mkdir -p ${BUILD_DIR}; \
+	cd ${BUILD_DIR}; \
+	cmake .. -DCMAKE_BUILD_TYPE:STRING=$(BUILD_TYPE) -DCMAKE_INTERPROCEDURAL_OPTIMIZATION:BOOL=ON -DCMAKE_INSTALL_PREFIX:PATH=$(INSTALL_DIR) -DMUJOCO_HARDEN:BOOL=ON $(CMAKE_ARGS); \
 	cmake --build . --config=$(BUILD_TYPE)
 
 install: all
-	@cd ${BUILD_DIR}
-	cmake --install .
+	@cd ${BUILD_DIR}; cmake --install .
 
 run: all
-	@cd $(BIN_DIR)
-	./${EXEC} $(MODEL)
+	@cd $(BIN_DIR); ./${EXEC} $(MODEL)
 
 clean:
 	@rm -rf ${BUILD_DIR} ${INSTALL_DIR}
 
 test: all
-	@cd ${BUILD_DIR}
-	ctest -C $(BUILD_TYPE) --output-on-failure .
+	@cd ${BUILD_DIR}; ctest -C $(BUILD_TYPE) --output-on-failure .
 
 
 printvars:
