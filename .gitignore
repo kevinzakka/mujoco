@@ -18,6 +18,7 @@
 *.egg-info/
 build/
 build_cmake/
+mujoco_install/
 
 # Exclude macOS folder attributes
 .DS_Store
@@ -29,3 +30,4 @@ Info.framework.plist
 __pycache__/
 *.py[cod]
 *$py.class
+
