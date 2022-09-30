@@ -99,6 +99,8 @@ class MJSIMULATEAPI Simulate {
   int fullscreen = 0;
   int vsync = 1;
   int busywait = 0;
+  int depth = 0;
+  int stereo = 0;
 
   // keyframe index
   int key = 0;

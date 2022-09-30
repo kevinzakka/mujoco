@@ -22,6 +22,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <iostream>
 
 #include <GLFW/glfw3.h>
 #include "lodepng.h"
@@ -454,6 +455,46 @@ void sensorshow(mj::Simulate* sim, mjrRect rect) {
   mjr_figure(viewport, &sim->figsensor, &sim->con);
 }
 
+// show depth overlay
+void depthshow(mj::Simulate* sim, mjrRect rect) {
+  // constant width with and without profiler
+  int width = sim->profiler ? rect.width/3 : rect.width/4;
+
+  // render figure in the top right
+  mjrRect viewport = {
+    rect.left + rect.width - width,
+    rect.bottom + rect.height - rect.height/3,
+    width,
+    rect.height/2
+  };
+
+  // render scene in offscreen buffer
+  mjr_render(viewport, &sim->scn, &sim->con);
+
+  int total = viewport.width*viewport.height;
+
+  // read depth buffer, values are in range [0, 1]
+  std::unique_ptr<float []> depth(new float[total]);
+  mjr_readPixels(nullptr, depth.get(), viewport, &sim->con);
+
+  // convert to meters
+  float extent = sim->m->stat.extent;
+  float near = sim->m->vis.map.znear * extent;
+  float far = sim->m->vis.map.zfar * extent;
+  for (int i=0; i<total; ++i) {
+    depth[i] = near / (1.0f - depth[i] * (1.0f - near/far));
+  }
+
+  // convert to a 3-channel 8-bit image
+  std::unique_ptr<unsigned char[]> depth8(new unsigned char[3*viewport.width*viewport.height]);
+  for (int i=0; i<viewport.width*viewport.height; i++) {
+    depth8[3*i] = depth8[3*i+1] = depth8[3*i+2] = depth[i] * 255;
+  }
+
+  // render colorized depth
+  mjr_drawPixels(depth8.get(), nullptr, viewport, &sim->con);
+}
+
 // prepare info text
 void infotext(mj::Simulate* sim,
               char (&title)[mj::Simulate::kMaxFilenameLength],
@@ -716,6 +757,13 @@ void makerendering(mj::Simulate* sim, int oldstate) {
     defFlag[0].pdata = sim->scn.flags + i;
     mjui_add(&sim->ui0, defFlag);
   }
+  // additional stereo and depth flags
+  mju::strcpy_arr(defFlag[0].name, "Stereo");
+  defFlag[0].pdata = &sim->scn.stereo;
+  mjui_add(&sim->ui0, defFlag);
+  mju::strcpy_arr(defFlag[0].name, "Depth");
+  defFlag[0].pdata = &sim->depth;
+  mjui_add(&sim->ui0, defFlag);
 }
 
 
@@ -1812,6 +1860,11 @@ void Simulate::render() {
   // show sensor
   if (this->sensor) {
     sensorshow(this, smallrect);
+  }
+
+  // show depth
+  if (this->depth) {
+    depthshow(this, smallrect);
   }
 
   // take screenshot, save to file
