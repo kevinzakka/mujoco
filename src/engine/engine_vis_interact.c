@@ -522,8 +522,13 @@ void mjv_initPerturb(const mjModel* m, const mjData* d, const mjvScene* scn, mjv
     return;
   }
 
+  // compute selection point in world coordinates
+  mjtNum selpos[3];
+  mju_rotVecMat(selpos, pert->localpos, d->xmat+9*pert->select);
+  mju_addTo3(selpos, d->xpos+3*pert->select);
+
   // copy
-  mju_copy3(pert->refpos, d->xipos + 3*sel);
+  mju_copy3(pert->refpos, selpos);
   mju_mulQuat(pert->refquat, d->xquat + 4*sel, m->body_iquat + 4*sel);
 
   // get camera info
@@ -601,6 +606,11 @@ void mjv_applyPerturbForce(const mjModel* m, mjData* d, const mjvPerturb* pert) 
     return;
   }
 
+  // compute selection point in world coordinates
+  mjtNum selpos[3];
+  mju_rotVecMat(selpos, pert->localpos, d->xmat+9*pert->select);
+  mju_addTo3(selpos, d->xpos+3*pert->select);
+
   // get pointer to body xfrc_applied
   result = d->xfrc_applied + 6*sel;
 
@@ -611,7 +621,7 @@ void mjv_applyPerturbForce(const mjModel* m, mjData* d, const mjvPerturb* pert) 
   //  - force
   stiffness = m->vis.map.stiffness;
   mass = 1.0/mju_max(mjMINVAL, m->body_invweight0[2*sel]);
-  mju_sub3(result, pert->refpos, d->xipos+3*sel);
+  mju_sub3(result, pert->refpos, selpos);
   mju_scl3(result, result, stiffness*mass);
   mju_addToScl3(result, bvel+3, -sqrtf(stiffness)*mass);
 
