@@ -90,7 +90,15 @@ jobs:
               -DMUJOCO_HARDEN:BOOL=ON
             tmpdir: "/tmp"
           - os: windows-2022
+            additional_label: "with MSVC"
             cmake_build_args: "-- -m"
+            tmpdir: "C:/Temp"
+          - os: windows-2022
+            additional_label: "with LLVM"
+            cmake_args: >-
+              -G Ninja
+              -DCMAKE_C_COMPILER:STRING=clang
+              -DCMAKE_CXX_COMPILER:STRING=clang++
             tmpdir: "C:/Temp"
 
     name: "MuJoCo on ${{ matrix.os }} ${{ matrix.additional_label }}"
