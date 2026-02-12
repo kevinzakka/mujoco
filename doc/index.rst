@@ -14,6 +14,7 @@
    programming/index.rst
    APIreference/index.rst
    python
+   System ID <sysid>
    MuJoCo XLA <mjx>
    MuJoCo Warp <mjwarp/index.rst>
    unity

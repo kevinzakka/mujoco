@@ -791,7 +791,7 @@ successfully installed, ``cd`` outside of the ``mujoco`` directory and run
 Modules
 =======
 
-The ``mujoco`` package contains two sub-modules: ``mujoco.rollout`` and ``mujoco.minimize``
+The ``mujoco`` package contains three sub-modules: ``mujoco.rollout``, ``mujoco.minimize``, and ``mujoco.sysid``
 
 .. _PyRollout:
 
@@ -881,6 +881,18 @@ Quadratic Programs with :ref:`mju_boxQP`. It is documented in the associated not
 
 .. |lscolab| image:: https://colab.research.google.com/assets/colab-badge.png
              :target: https://colab.research.google.com/github/google-deepmind/mujoco/blob/main/python/least_squares.ipynb
+
+.. _PySysId:
+
+sysid
+-----
+
+The ``mujoco.sysid`` module provides a system identification toolbox for finding physical parameters that make
+simulation match recorded sensor data. It implements a gray-box pipeline using Gauss-Newton optimization with
+batched rollouts. For full documentation see :doc:`System Identification <sysid>`. |sysid_py_colab|
+
+.. |sysid_py_colab| image:: https://colab.research.google.com/assets/colab-badge.png
+                    :target: https://colab.research.google.com/github/google-deepmind/mujoco/blob/main/python/mujoco/sysid/sysid.ipynb
 
 .. _PyUSDexport:
 
