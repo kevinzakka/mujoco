@@ -22,10 +22,13 @@
 #include <mujoco/mjmodel.h>
 #include <mujoco/mjsan.h>  // IWYU pragma: keep
 #include <mujoco/mjxmacro.h>
+#include "engine/engine_collision_driver.h"
 #include "engine/engine_init.h"
+#include "engine/engine_io.h"
 #include "engine/engine_core_util.h"
 #include "engine/engine_core_smooth.h"
 #include "engine/engine_memory.h"
+#include "engine/engine_support.h"
 #include "engine/engine_sleep.h"
 #include "engine/engine_util_blas.h"
 #include "engine/engine_util_errmem.h"
@@ -2382,13 +2385,59 @@ void mj_referenceConstraint(const mjModel* m, mjData* d) {
   int nefc = d->nefc;
   mjtNum* KBIP = d->efc_KBIP;
 
-  // compute efc_vel
+  // compute efc_vel = J * qvel
   mj_mulJacVec(m, d, d->efc_vel, d->qvel);
 
   // compute aref = -B*vel - K*I*(pos-margin)
-  for (int i=0; i < nefc; i++) {
+  for (int i = 0; i < nefc; i++) {
     d->efc_aref[i] = -KBIP[4*i+1]*d->efc_vel[i]
                      -KBIP[4*i]*KBIP[4*i+2]*(d->efc_pos[i]-d->efc_margin[i]);
+  }
+
+  // finite-difference correction for J_dot * qvel term:
+  // aref -= J_dot * qvel, approximated as (J(q+eps*v)*v - J(q)*v) / eps
+  if (nefc > 0 && m->nv > 0) {
+    mjtNum eps = 1e-6;
+
+    // use a fresh mjData so we don't disturb d's arena/stack/constraint state;
+    // mj_makeData (not mj_copyData) is safe to call when d->pstack > 0
+    mjData* d2 = mj_makeData(m);
+    if (d2) {
+      // copy state that affects constraint construction into d2
+      mju_copy(d2->qpos, d->qpos, m->nq);
+      mju_copy(d2->qvel, d->qvel, m->nv);
+      mju_copy(d2->mocap_pos, d->mocap_pos, 3*m->nmocap);
+      mju_copy(d2->mocap_quat, d->mocap_quat, 4*m->nmocap);
+      for (int i = 0; i < m->neq; i++) {
+        d2->eq_active[i] = d->eq_active[i];
+      }
+
+      // perturb: qpos += eps * qvel (handles quaternions correctly)
+      mj_integratePos(m, d2->qpos, d2->qvel, eps);
+
+      // recompute full position pipeline at perturbed state
+      mj_kinematics(m, d2);
+      mj_comPos(m, d2);
+      mj_tendon(m, d2);
+      mj_collision(m, d2);
+      mj_makeConstraint(m, d2);
+
+      if (d2->nefc == nefc) {
+        // compute J(q+eps*qvel) * qvel at perturbed state
+        mj_markStack(d);
+        mjtNum* efc_vel_pert = mjSTACKALLOC(d, nefc, mjtNum);
+        mj_mulJacVec(m, d2, efc_vel_pert, d->qvel);
+
+        // apply correction: aref -= (efc_vel_pert - efc_vel) / eps
+        for (int i = 0; i < nefc; i++) {
+          d->efc_aref[i] -= (efc_vel_pert[i] - d->efc_vel[i]) / eps;
+        }
+        mj_freeStack(d);
+      }
+      // if nefc changed, skip correction (constraint topology changed)
+
+      mj_deleteData(d2);
+    }
   }
 }
 
