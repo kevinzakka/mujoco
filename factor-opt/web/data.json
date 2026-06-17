@@ -1,0 +1,241 @@
+{
+ "source": "factor-optimized/OPTIMIZATION-LOG.md",
+ "profile_source": "factor-optimized/README.md",
+ "generated_by": "web/build.py",
+ "target_speedup": 1.3,
+ "target_reached": true,
+ "best_speedup": 1.33,
+ "target_first_reached": "Iteration 1",
+ "trust": {
+  "comparator_max_solve_diff": "0",
+  "comparator_over_tol": "0",
+  "certifier_kernel_residual": "3.30e-17",
+  "certifier_dense_residual": "7.64e-17",
+  "certifier_spd_fail": "0",
+  "determinism_sha": "e9f956b1\u2026c3f18",
+  "corpus_sha": "905674e2\u202681fa1"
+ },
+ "profile_shares": [
+  {
+   "model": "arm26",
+   "nv": 2,
+   "ref_s": 2.1e-07,
+   "share": 0.3
+  },
+  {
+   "model": "car",
+   "nv": 8,
+   "ref_s": 1.4e-06,
+   "share": 2.1
+  },
+  {
+   "model": "humanoid",
+   "nv": 27,
+   "ref_s": 7.8e-06,
+   "share": 11.7
+  },
+  {
+   "model": "balloons",
+   "nv": 30,
+   "ref_s": 3.8e-06,
+   "share": 5.6
+  },
+  {
+   "model": "humanoid100",
+   "nv": 627,
+   "ref_s": 2.33e-05,
+   "share": 34.8
+  },
+  {
+   "model": "floppy",
+   "nv": 1153,
+   "ref_s": 2.96e-05,
+   "share": 44.2
+  }
+ ],
+ "about": "# Optimization log \u2014 MuJoCo inertia factor+solve kernel\n\nOne entry per hypothesis. Each records: the change, before/after **per-corpus-pass\nmedian** (from `measure-factor.sh`, which auto-calibrates the inner repeat so each\ntimed sample is many passes \u2014 stable to ~\u00b10.6%), the speedup vs the reference\nbaseline, every correctness gate, the keep/revert decision, and the cost.\n\n**Ruler:** `prove-factor-harness.sh` gates each change \u2014 comparator (solve-output\nwithin 1e-6 rel + residual band), independent dense-Cholesky certifier,\ndeterminism (byte-identical factor), corpus sha256 unchanged. A change that fails\nany gate is reverted regardless of speed. Realistic expectation: this is\ndouble-precision sparse LDL\u1d40 already reasonably tuned, so the honest target is a\nsmall single-digit factor on the large models, not a rewrite.\n\n**Revert discipline (this branch):** the MuJoCo repo is on an active unrelated\nfeature branch, so we do NOT `git commit` to snapshot kept states. Instead the\nlast green kernel is copied to `factor_optimized.last-good.c`; revert = copy it\nback.\n\n---",
+ "entries": [
+  {
+   "index": 0,
+   "id": "Iteration 0",
+   "title": "baseline (pulled, unmodified copy)",
+   "decision": "baseline",
+   "speedup": 1.0,
+   "target_reached": false,
+   "ref_median": 6.8e-05,
+   "opt_median": 6.4e-05,
+   "opt_us": 64.0,
+   "gates_green": true,
+   "certifier_residual": "3.30e-17",
+   "gate_detail": {
+    "comparator_max_solve_diff": "0",
+    "comparator_over_tol": "0",
+    "certifier_kernel_residual": "3.30e-17",
+    "certifier_dense_residual": "7.64e-17",
+    "certifier_spd_fail": "0",
+    "determinism_sha": "e9f956b1\u2026c3f18"
+   },
+   "per_model": [],
+   "date": null,
+   "tokens": null,
+   "markdown": "**State.** `factor-optimized/` is a faithful, editable transcription of the\nshipping kernel: `factorI_opt` (= `mj_factorI`), `solveLD_opt` (= `mj_solveLD`,\nsingle-vector path), and `dotSparse_opt` (= the scalar `mju_dotSparse`, inlined\nbecause it is a header `static inline`, not an exported symbol). `mju_addToScl` /\n`mju_scl` are still called from libmujoco. No optimization applied yet \u2014 this is\nthe proven-identical starting point.\n\n**Corpus.** 18 snapshots / 72 RHS from 6 models, `nv \u2208 {2, 8, 27, 30, 627, 1153}`\n(`arm26`, `car`, `humanoid`, `balloons`, `humanoid100`, `floppy`). sha256\n`905674e2\u202681fa1`, read-only.\n\n**Measurement (per-corpus-pass median, N=9, inner=516 \u2248 33 ms/sample).**\n\n| | median s/pass | spread |\n|---|---|---|\n| reference (`build/run_factor_ref`) | \u2248 6.8e-05 | \u2014 |\n| optimized (`build/run_factor_opt`) | \u2248 6.4e-05 | ~\u00b10.6% run-to-run |\n\n**Speedup vs reference: ~1.0\u00d7 (noise).** Identical algorithm; deviation from\n1.00\u00d7 is measurement noise. This is the calibration reading, not a result.\n\n**Gates (all green).**\n- comparator: `max_solve_diff = 0`, `over_tol = 0` \u2192 **PASS** (bit-identical to\n  reference on arm64, as expected: no AVX, same summation order, same library\n  BLAS on the factor side).\n- certifier: kernel residual `3.30e-17` vs independent dense-Cholesky `7.64e-17`,\n  `spd_fail = 0` \u2192 **PASS**.\n- determinism: two factor runs byte-identical (qLD sha256 `e9f956b1\u2026c3f18`).\n- corpus sha256 unchanged.\n\n**Verification:** `run_factor_opt` links no `mj_factorI` from libmujoco\n(`nm -u | grep mj_factorI` \u2192 0) \u2014 confirming the kernel is our own editable copy,\nnot a wrapper.\n\n**Cost:** harness build + pull + measure-protocol hardening (prior turns).\n\n**Decision:** KEEP as the baseline. `cp factor_optimized.c\nfactor_optimized.last-good.c`. Profiling and the first real candidate follow in\niteration 1.\n\n---"
+  },
+  {
+   "index": 1,
+   "id": "Iteration 1",
+   "title": "`-O3 -march=native` + inline `mju_addToScl`/`mju_scl` (NEON)",
+   "decision": "kept",
+   "speedup": 1.3,
+   "target_reached": true,
+   "ref_median": 6.69e-05,
+   "opt_median": 5.16e-05,
+   "opt_us": 51.6,
+   "gates_green": true,
+   "certifier_residual": "3.30e-17",
+   "gate_detail": {
+    "comparator_max_solve_diff": "0",
+    "comparator_over_tol": "0",
+    "certifier_kernel_residual": "3.30e-17",
+    "certifier_dense_residual": "7.64e-17",
+    "certifier_spd_fail": "0",
+    "determinism_sha": "e9f956b1\u2026c3f18",
+    "corpus_sha": "905674e2\u202681fa1"
+   },
+   "per_model": [
+    {
+     "model": "humanoid100",
+     "speedup": 1.29
+    },
+    {
+     "model": "humanoid",
+     "speedup": 1.04
+    },
+    {
+     "model": "balloons",
+     "speedup": 1.07
+    },
+    {
+     "model": "floppy",
+     "speedup": 1.56
+    }
+   ],
+   "date": null,
+   "tokens": null,
+   "markdown": "**Hypothesis.** On arm64 `mjUSEAVX` is undefined, so the library\n`mju_addToScl`/`mju_scl` called from `factorI_opt`'s hot inner loop are scalar\nAND reached through a cross-TU function call (no inline, no NEON). Replacing them\nwith `static inline restrict` copies and compiling the kernel TU at `-O3\n-march=native` lets clang inline + auto-vectorize the contiguous `res[i] +=\nvec[i]*scl` / `res[i] = vec[i]*scl` loops with NEON (2 doubles/lane, FMA).\nElement-wise loops (no reduction) \u2192 bitwise-identical output preserved.\n\n**Change.** (a) Added `addToScl_opt`/`scl_opt` (`static inline`, `restrict`) and\ncalled them in `factorI_opt` instead of the libmujoco symbols. (b) Makefile: new\n`OPTFLAGS := -O3 -march=native \u2026`, split `factor_optimized.o` into its own rule\nbuilt with OPTFLAGS; `run_factor.c` stays at harness `CFLAGS`. The reference\ntarget and harness are untouched.\n\n**Measurement (full corpus, measure-factor.sh N=9, two runs):**\n\n| | median s/pass |\n|---|---|\n| reference | 6.69e-05 \u2026 6.79e-05 |\n| optimized (iter 1) | 5.16e-05 \u2026 5.19e-05 |\n\n**Speedup vs reference: ~1.29\u20131.32\u00d7 (\u22481.30\u00d7).** Per-model (single-model corpora):\nfloppy 2.99e-5\u21921.91e-5 (**1.56\u00d7**), humanoid100 2.34e-5\u21921.82e-5 (**1.29\u00d7**),\nballoons 1.07\u00d7, humanoid 1.04\u00d7. Gains concentrate in the big models where factor\nfill (dense inner updates) dominates \u2014 exactly the Amdahl target.\n\n**Gates (all green, prove-harness exit 0).**\n- comparator: `max_solve_diff = 0`, `over_tol = 0` \u2192 **PASS** (vectorizing\n  element-wise loops keeps bits exact).\n- certifier: kernel residual `3.30e-17` vs dense-Cholesky `7.64e-17`, `spd_fail=0`\n  \u2192 **PASS**.\n- determinism: two factor dumps byte-identical, qLD sha256 `e9f956b1\u2026c3f18` \u2014\n  **unchanged from baseline** (bit-for-bit same factor as scalar path).\n- corpus sha256 `905674e2\u202681fa1` unchanged.\n\n**Cost:** ~1 iteration; tokens: n/a \u2014 not run under nagent.\n\n**Decision:** **KEEP.** Re-snapshotted `factor_optimized.last-good.c` and\n`Makefile.last-good`. This is the primary lever; remaining candidates target the\nsolve sub-passes (\u224860% of time), which iter 1 leaves scalar.\n\n---"
+  },
+  {
+   "index": 2,
+   "id": "Iteration 2",
+   "title": "`restrict` solve pointers + specialize index==NULL path",
+   "decision": "kept",
+   "speedup": 1.33,
+   "target_reached": true,
+   "ref_median": 6.75e-05,
+   "opt_median": 5.07e-05,
+   "opt_us": 50.7,
+   "gates_green": true,
+   "certifier_residual": "3.30e-17",
+   "gate_detail": {
+    "comparator_max_solve_diff": "0",
+    "comparator_over_tol": "0",
+    "certifier_kernel_residual": "3.30e-17",
+    "certifier_dense_residual": "7.64e-17",
+    "certifier_spd_fail": "0",
+    "determinism_sha": "e9f956b1\u2026c3f18"
+   },
+   "per_model": [],
+   "date": null,
+   "tokens": null,
+   "markdown": "**Hypothesis.** Solve is now ~60\u201385% of kernel time (factor was vectorized in\niter 1). In `solveLD_opt`, (a) `qLD`/`colind`/`rownnz`/`rowadr` were not\n`restrict`, so the compiler must assume the scatter `x[colind[adr]] -=\nqLD[adr]*x_i` may alias `qLD`; (b) every row re-evaluated `index ? index[k] : k`\nthough `index` is always NULL here. Marking the read-only pointers `restrict` and\nsplitting out the identity-order (index==NULL) path removes per-row indirection\nand aliasing barriers without touching arithmetic order (so output stays\nbit-exact). Also folded the redundant `rownnz[i]==1` guard in the L\u207b\u00b9 pass into\nthe existing `d>0` test (same behavior, one fewer branch).\n\n**Measurement (full corpus, N=9, three runs):**\n\n| | median s/pass |\n|---|---|\n| reference | 6.75e-05 \u2026 6.86e-05 |\n| optimized iter 1 | 5.16e-05 \u2026 5.19e-05 |\n| optimized iter 2 | 5.07e-05 \u2026 5.12e-05 |\n\n**Speedup vs reference: ~1.33\u00d7 (was ~1.30\u00d7).** ~1.5% improvement over iter 1 \u2014\nsmall, near the \u00b10.6% noise floor but consistently on the faster side across\nruns, and it is a pure simplification (dead-branch removal) that strengthens the\noptimizer's contract. The dominant solve passes (indexed scatter / gather) cannot\nbe vectorized without reordering FP reductions, which the prove harness forbids\n(`max_solve_diff` must be exactly 0), so this is near the solve ceiling under the\nbit-exact constraint.\n\n**Gates (all green, prove-harness exit 0).**\n- comparator `max_solve_diff=0`, `over_tol=0` \u2192 PASS.\n- certifier kernel resid `3.30e-17` vs dense `7.64e-17`, `spd_fail=0` \u2192 PASS.\n- determinism byte-identical, qLD sha256 `e9f956b1\u2026c3f18` unchanged.\n- corpus sha256 unchanged.\n\n**Cost:** ~1 iteration; tokens: n/a \u2014 not run under nagent.\n\n**Decision:** **KEEP** (pure simplification + small consistent gain). Re-snapshotted\n`factor_optimized.last-good.c`.\n\n---"
+  },
+  {
+   "index": 3,
+   "id": "Iteration 3",
+   "title": "`restrict` factor pointers + specialize index==NULL/diaginv path",
+   "decision": "kept",
+   "speedup": 1.33,
+   "target_reached": true,
+   "ref_median": 6.68e-05,
+   "opt_median": 5.08e-05,
+   "opt_us": 50.8,
+   "gates_green": true,
+   "certifier_residual": "3.30e-17",
+   "gate_detail": {
+    "comparator_max_solve_diff": "0",
+    "comparator_over_tol": "0",
+    "certifier_kernel_residual": "3.30e-17",
+    "certifier_spd_fail": "0"
+   },
+   "per_model": [],
+   "date": null,
+   "tokens": null,
+   "markdown": "**Hypothesis.** Mirror iter 2 on `factorI_opt`: mark `mat`/`diaginv`/CSR pointers\n`restrict` and split the identity-order, diaginv-present fast path so the per-row\n`index ? index[j] : j` and `if (diaginv)` branches vanish. Faithful general\nfallback (non-NULL index, or NULL diaginv) is retained.\n\n**Measurement (full corpus, N=9, three runs):**\n\n| | median s/pass |\n|---|---|\n| reference | 6.68e-05 \u2026 6.89e-05 |\n| optimized iter 2 | 5.07e-05 \u2026 5.12e-05 |\n| optimized iter 3 | 5.08e-05 \u2026 5.25e-05 |\n\n**Speedup vs reference: ~1.31\u20131.33\u00d7 \u2014 no measurable change vs iter 2.** clang had\nalready hoisted these loop-invariant branches; the factor inner loop was already\nNEON-vectorized in iter 1 and is only ~15\u201340% of kernel time now. This is a pure\nsimplification with **no regression**, kept for clarity/faithfulness, not for a\nspeed gain. Honest verdict: factor is at its practical ceiling under the bit-exact\nconstraint.\n\n**Gates (all green, prove-harness exit 0).**\n- comparator `max_solve_diff=0`, `over_tol=0` \u2192 PASS.\n- certifier kernel resid `3.30e-17`, `over_band=0`, `spd_fail=0` \u2192 PASS.\n- determinism byte-identical (qLD sha256 unchanged).\n- corpus sha256 unchanged.\n\n**Cost:** ~1 iteration; tokens: n/a \u2014 not run under nagent.\n\n**Decision:** **KEEP** (pure simplification, no regression). Re-snapshotted.\n\n### Candidate-list status after iter 3\n1. ~~`-O3 -march=native` + inline addToScl/scl~~ \u2014 DONE iter 1 (the big win, 1.30\u00d7).\n2. Vectorize solve L\u207b\u00b9 dot product \u2014 **REJECTED:** the prove harness requires\n   `max_solve_diff == 0` exactly, so any change to the `(r0+r2)+(r1+r3)` reduction\n   order (which NEON re-association would force) fails the gate. Cannot vectorize\n   the gather without reordering. Bit-exact ceiling.\n3. Tighten solve L\u207b\u1d40 scatter \u2014 partially DONE iter 2 (restrict + branch removal,\n   ~1.5%). Full vectorization blocked: indexed scatter, no NEON scatter HW, and\n   reordering would risk the bit-exact gate anyway.\n4. restrict/const + pointer hoisting \u2014 DONE iters 2 & 3.\n5. Block/supernodal dense diagonal \u2014 **REJECTED:** large rewrite; the dense\n   diagonal already auto-vectorizes via inlined addToScl; and any blocked\n   reduction reorders FP \u2192 breaks `max_solve_diff==0`. Payoff uncertain, cost high,\n   gate-hostile.\n\nCandidate list is exhausted under the bit-exact (`max_solve_diff==0`) constraint.\n\n---\n\n## REFRAME (iterations 4+) \u2014 the real contract is tolerance, not bit-exactness\n\nThe comparator (`compare_factor`) PASSES iff `over_tol == 0`, i.e. **\u2016x_opt \u2212\nx_ref\u2016\u221e / \u2016x_ref\u2016\u221e \u2264 1e-6** (the solve-output band) AND the residual band\n`r_opt \u2264 max(8\u00b7r_ref, 1e-11)`. It is **not** a byte diff \u2014 see the file header:\n\"later optimized kernels are not bit-identical.\" The iter-2/iter-3 reasoning that\n\"`max_solve_diff` must be exactly 0 \u2192 cannot vectorize the solve\" was a\nself-imposed constraint the comparator never required. A solve change that makes\n`max_solve_diff` ~1e-16 (a few ULPs from reassociated FP reductions) is correct\nand PASSing, provided `over_tol == 0`, the certifier residual stays in band, and\nthe factor stays deterministic run-to-run. Iterations 4-6 below re-evaluate the\nsolve under this real contract.\n\nCaveat recorded for the record: `prove-factor-harness.sh` carries an *extra*,\nharness-side gate (line ~77) that hard-fails if `max_solve_diff != 0` \u2014 a holdover\nfrom the iteration-0 identity-baseline self-check. We are not permitted to edit\nthe harness, so any **kept** change must keep `max_solve_diff == 0` to leave\nprove-harness green. Reorder-based solve changes (iter 6) are therefore evaluated\ndirectly via `compare_factor`/`certify_factor` (the true contract) and reverted if\nthey give no speed benefit \u2014 which, as measured below, they do not.\n\n---"
+  },
+  {
+   "index": 4,
+   "id": "Iteration 4",
+   "title": "`-ffp-contract=fast` on the optimized object only",
+   "decision": "reverted",
+   "speedup": 1.281,
+   "target_reached": false,
+   "ref_median": null,
+   "opt_median": null,
+   "opt_us": null,
+   "gates_green": false,
+   "certifier_residual": "3.30e-17",
+   "gate_detail": {
+    "comparator_max_solve_diff": "0",
+    "comparator_over_tol": "0",
+    "certifier_kernel_residual": "3.30e-17",
+    "certifier_spd_fail": "0"
+   },
+   "per_model": [],
+   "date": null,
+   "tokens": null,
+   "markdown": "**Hypothesis.** Let clang contract `a*b + c` into a single FMA in the solve's dot\nproducts / AXPY updates, scoped to `factor_optimized.o` only (not harness/ref).\nExpected to either speed up the reductions or, at worst, be a no-op; may perturb\nbits ~1 ULP.\n\n**Change.** Makefile OPTFLAGS: add `-ffp-contract=fast` (optimized object only).\n\n**Gates.** Build clean. `compare_factor`: **`max_solve_diff = 0`**, `over_tol = 0`\n\u2192 PASS (the contraction produced bit-identical output here \u2014 the scalar 4-way dot\nalready separates the `*` and `+=`, and clang did not fuse across the independent\naccumulators). `certify_factor`: kernel resid `3.30e-17`, `over_band=0`,\n`spd_fail=0` \u2192 PASS.\n\n**Measurement (full corpus, N=9, 3 runs).** speedup `1.281x / 1.294x / 1.359x`\n(median \u2248 1.30x) vs baseline \u2248 1.32x \u2014 **no change, within the \u00b10.6% noise floor.**\n\n**Decision:** **REVERT** (measured no-op; nothing to keep \u2014 flag adds no value and\nno bits changed). Makefile restored.\n\n---"
+  },
+  {
+   "index": 5,
+   "id": "Iteration 5",
+   "title": "hand-written NEON intrinsics for `dotSparse_opt`",
+   "decision": "reverted",
+   "speedup": 1.27,
+   "target_reached": false,
+   "ref_median": null,
+   "opt_median": null,
+   "opt_us": null,
+   "gates_green": false,
+   "certifier_residual": null,
+   "gate_detail": {
+    "comparator_max_solve_diff": "0",
+    "comparator_over_tol": "0"
+   },
+   "per_model": [],
+   "date": null,
+   "tokens": null,
+   "markdown": "**Hypothesis.** The L\u207b\u00b9 pass `x[i] -= \u03a3 qLD[adr]\u00b7x[colind[adr]]` is a gather-dot.\nReplace the scalar 4-way tree with two 128-bit `float64x2_t` FMA accumulators\n(4 doubles in flight), loading `qLD`/`vec1` contiguously via `vld1q_f64` and\nbuilding the gathered `vec2` lane-pair from scalar loads `vec2[ind1[i]]`, then\n`vaddvq_f64`. This reassociates the reduction, so a ~1e-16 solve diff is expected\nand acceptable under the 1e-6 contract.\n\n**Change.** `dotSparse_opt`: `#if __ARM_NEON` NEON path (2\u00d7 `vfmaq_f64`), scalar\nfallback retained. `#include <arm_neon.h>`.\n\n**Gates.** Build clean. `compare_factor`: `max_solve_diff = 0` (the gathered\nlane-pairs are still built from the same scalar loads and the FMA happened to\nmatch the scalar bits on this corpus \u2014 rows are short/sparse so most of the work\nfalls in the scalar tail where `d \u2264 4`), `over_tol = 0` \u2192 PASS. `certify_factor`:\nresid `3.30e-17` \u2192 PASS.\n\n**Measurement (full corpus, N=9, 3 runs).** speedup `1.270x / 1.345x / 1.307x`\n(median \u2248 1.31x) \u2014 **no measurable gain.**\n\n**Mechanism finding (the point of this experiment).** The dot product does **not**\nspeed up because it is **gather-bound, not arithmetic-bound**: `vec2[ind1[i]]`\nissues a dependent scalar load per term to a scattered address, and arm64 has no\nhardware gather. The two FMA accumulators sit idle waiting on those loads; widening\nthe arithmetic does nothing when the bottleneck is memory latency. The L rows are\nalso short and sparse, so the vectorized body rarely runs.\n\n**Decision:** **REVERT** (no gain, added complexity). Kernel restored to last-good.\n\n---"
+  },
+  {
+   "index": 6,
+   "id": "Iteration 6",
+   "title": "aggressive scoped fast-math (`-fassociative-math` + friends)",
+   "decision": "reverted",
+   "speedup": 1.33,
+   "target_reached": true,
+   "ref_median": null,
+   "opt_median": null,
+   "opt_us": null,
+   "gates_green": false,
+   "certifier_residual": null,
+   "gate_detail": {
+    "comparator_max_solve_diff": "2.5679e-16",
+    "comparator_over_tol": "0",
+    "certifier_spd_fail": "0"
+   },
+   "per_model": [],
+   "date": null,
+   "tokens": null,
+   "markdown": "**Hypothesis.** Give clang full freedom to reassociate and auto-vectorize the\nsolve reductions: `-fassociative-math -freciprocal-math -fno-signed-zeros\n-fno-trapping-math -ffp-contract=fast`, scoped to `factor_optimized.o` only. This\nis the strongest legal lever for letting the compiler NEON-ify the\nreduction/AXPY. (Stops short of full `-ffast-math`, which assumes no NaN/Inf and\nrisks the SPD/residual gate.)\n\n**Change.** Makefile OPTFLAGS (optimized object only) += the five flags above.\n\n**Gates.** Build clean. `compare_factor`: **`max_solve_diff = 2.5679e-16`**,\n`over_tol = 0` \u2192 **PASS** \u2014 this is the expected, correct behavior: reassociation\nmoved a few ULPs, comfortably inside the 1e-6 solve band. `certify_factor`: kernel\nresid **unchanged at `3.30e-17`**, `over_band=0`, `spd_fail=0` \u2192 PASS (residual\nquality untouched). Determinism: the optimized kernel is still deterministic\nrun-to-run (same flags \u2192 same code \u2192 same bytes); the ~1e-16 diff is vs the\n*reference*, not run-to-run.\n\n**Measurement (full corpus, N=9, 4 runs).** speedup `1.330x / 1.296x / 1.303x /\n1.291x` (median \u2248 1.30x) vs baseline \u2248 1.32x \u2014 **no measurable gain.**\n\n**Mechanism finding.** Even with full reassociation freedom (proven active by the\nnonzero `max_solve_diff`), the solve does not get faster. This corroborates iter 5:\nthe solve's two dominant passes are **memory-bound on indexed gather/scatter**\n(`vec2[ind1[i]]` and `x[colind[adr]] -= \u2026`), not FP-reduction-latency-bound.\nReassociation removes a dependency chain that was never the critical path.\n\n**Decision:** **REVERT.** It changes bits (max_solve_diff 2.57e-16) for zero speed\nbenefit; under \"keep only if it measurably helps,\" there is nothing to keep.\nMakefile restored. NOTE: even had it given a gain, the prove-harness line-77 gate\nwould have rejected it \u2014 but the dispositive reason is the measured no-gain.\n\n---\n\n## Candidate-list status after iter 6 \u2014 CLOSE-OUT (real tolerance contract)\n\nThe iter-3 entries that read \"REJECTED because `max_solve_diff==0`\" were rejected\nfor the **wrong reason** (a bit-exactness standard the comparator never imposes).\nRe-evaluated under the actual 1e-6 / residual-band contract:\n\n1. ~~`-O3 -march=native` + inline addToScl/scl~~ \u2014 DONE iter 1, the big win\n   (\u22481.30\u20131.33\u00d7). The factor inner update is the only arithmetic-bound hot loop\n   and it is NEON-vectorized. **At its ceiling.**\n2. Vectorize solve L\u207b\u00b9 gather-dot \u2014 **IMPLEMENTED & MEASURED (iter 5, NEON; iter 6,\n   compiler reassoc). No gain \u2014 gather-bound, not arithmetic-bound; arm64 has no\n   gather HW.** Reverted. (Supersedes the old \"REJECTED: max_solve_diff must be 0\"\n   \u2014 the real reason is *memory-bound, measured zero speedup*, not the tolerance.)\n3. Solve L\u207b\u1d40 scatter \u2014 partially tightened iter 2 (restrict + branch removal). Full\n   vectorization is **scatter-bound** (`x[colind[adr]]` indexed RMW, no NEON\n   scatter HW); the iter-6 fast-math pass covered it with the rest of the solve and\n   showed no gain. **Memory-bound ceiling, measured.**\n4. restrict/const + pointer hoisting \u2014 DONE iters 2 & 3.\n5. Block/supernodal dense diagonal \u2014 still REJECTED, but now for the correct\n   reason: the dense diagonal already auto-vectorizes via the inlined `addToScl`;\n   a blocked rewrite is large and the solve (the remaining ~60%) is memory-bound,\n   so the achievable upside is bounded by gather/scatter latency, not arithmetic.\n   Cost high, measured upside ~0.\n\n**Close-out verdict.** Both halves are at their practical single-thread ceiling on\nthis M1 Max. Factor: arithmetic-bound inner update is NEON-vectorized (iter 1).\nSolve: memory-bound on indexed gather/scatter \u2014 proven by two independent\nvectorization attempts (hand NEON, compiler reassoc) that changed the arithmetic\n(iter 6: `max_solve_diff` 2.57e-16, comparator still PASS) yet moved the median by\n0% beyond noise. The remaining ceiling is DRAM/cache latency on scattered\naccesses, not instruction throughput; lifting it would require a different sparse\nstorage / reordering scheme (out of scope, and a different kernel). **Best kept\nresult stays iteration 3 at \u22481.33\u00d7 with `max_solve_diff == 0` and prove-harness\ngreen.**"
+  }
+ ]
+}

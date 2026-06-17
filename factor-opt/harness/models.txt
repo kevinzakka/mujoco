@@ -1,0 +1,25 @@
+# Factorization harness model zoo.
+# Paths are relative to the MuJoCo repo root (dump_corpus is invoked from there).
+# Chosen to span a range of nv and dense-vs-sparse M (nC == nM => dense column
+# structure; nC < nM => reduced/sparse M).
+#
+# Per-model dims observed at dump time (nv / nC / nM):
+#   model/tendon_arm/arm26.xml         nv=2     nC=3      nM=3      (tiny, dense)
+#   model/car/car.xml                  nv=8     nC=35     nM=35     (small, dense)
+#   model/humanoid/humanoid.xml        nv=27    nC=243    nM=243    (dense)
+#   model/balloons/balloons.xml        nv=30    nC=90     nM=105    (sparse)
+#   model/humanoid/humanoid100.xml     nv=627   nC=843    nM=2343   (large, sparse)
+#   model/flex/floppy.xml              nv=1153  nC=1153   nM=2305   (largest, flex)
+#
+# Seeds (see harness/dump_corpus.c):
+#   N_CONFIG = 3 seeded configs per model, N_RHS = 4 seeded RHS per config.
+#   config qpos seed : 0xC0FFEE  ^ (model_idx+1)<<32 ^ (config_idx+1)
+#   RHS vector  seed : 0xB16B00B5 ^ (model_idx+1)<<32 ^ (config_idx+1)
+#   PRNG = splitmix64; qpos = qpos0 + 0.05*U(-1,1); rhs ~ U(-1,1).
+
+model/tendon_arm/arm26.xml
+model/car/car.xml
+model/humanoid/humanoid.xml
+model/balloons/balloons.xml
+model/humanoid/humanoid100.xml
+model/flex/floppy.xml
