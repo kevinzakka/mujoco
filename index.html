@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backlash — output = J1 + J2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --vellum:#E7E9E4; --vellum-2:#EEF0EC; --ink:#181B1E; --ink-soft:#4A4F54;
+    --slate:#14171B; --slate-2:#1B1F24; --steel:#6B7177; --steel-d:#3C4147;
+    --brass:#C2913A; --grid:#D5D8D1; --grid-scope:#262C33;
+    --motor:#27A35A; --motor-glow:#4FD389; --output:#3B82D6; --output-glow:#62A8F2;
+    --wall:#D6442E; --wall-glow:#FF6B52;
+    --line:#C9CCC4;
+    --disp:"Archivo",sans-serif; --serif:"Newsreader",Georgia,serif; --mono:"JetBrains Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--vellum); color:var(--ink);
+    font-family:var(--serif); font-size:18px; line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      linear-gradient(var(--grid) 1px,transparent 1px),
+      linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:28px 28px; background-position:-1px -1px;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+  ::selection{background:var(--brass);color:#1a1407}
+
+  /* ---------- type ---------- */
+  .eyebrow{
+    font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.34em;
+    text-transform:uppercase;color:var(--ink-soft);margin:0 0 18px;
+  }
+  h1{
+    font-family:var(--disp);font-weight:900;font-size:clamp(3.4rem,11vw,8.5rem);
+    line-height:.86;letter-spacing:-.02em;margin:0;text-transform:uppercase;
+  }
+  h2{
+    font-family:var(--disp);font-weight:800;font-size:clamp(1.7rem,4vw,2.6rem);
+    letter-spacing:.01em;line-height:1.04;margin:0 0 .5em;text-transform:uppercase;
+  }
+  h3{font-family:var(--disp);font-weight:700;font-size:1.05rem;letter-spacing:.06em;
+     text-transform:uppercase;margin:0 0 .4em}
+  p{margin:0 0 1.1em;max-width:64ch}
+  a{color:var(--output);text-decoration-thickness:1px;text-underline-offset:3px}
+  strong{font-weight:600}
+  .lede{font-size:clamp(1.18rem,2.4vw,1.6rem);line-height:1.5;font-weight:400;max-width:30ch}
+  .mono{font-family:var(--mono)}
+
+  /* ---------- masthead (scientific) ---------- */
+  header{padding:clamp(46px,9vh,86px) 0 30px}
+  .masthead-meta{
+    display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--ink-soft);border-bottom:1px solid var(--ink);padding-bottom:12px;
+  }
+  header h1{
+    font-size:clamp(2.1rem,5.2vw,3.5rem);font-weight:800;line-height:1.0;
+    letter-spacing:-.015em;text-transform:none;margin:22px 0 0;
+  }
+  .abstract{
+    font-family:var(--serif);font-size:1.08rem;line-height:1.55;color:var(--ink-soft);
+    max-width:66ch;margin:16px 0 0;
+  }
+
+  /* ---------- nomenclature key ---------- */
+  .nomen{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:0 0 32px}
+  @media(max-width:760px){.nomen{grid-template-columns:1fr;gap:14px}}
+  .term{border-top:2px solid var(--c);padding:11px 0 0}
+  .term dt{font-family:var(--mono);font-weight:700;font-size:1rem;color:var(--c);letter-spacing:.01em}
+  .term dd{margin:7px 0 0;font-size:.92rem;line-height:1.5;color:var(--ink-soft);max-width:38ch}
+  .term dd b{color:var(--ink);font-weight:600}
+
+  /* ---------- section scaffolding ---------- */
+  section{padding:clamp(48px,8vh,96px) 0;border-top:1px solid var(--line)}
+  .sec-head{display:flex;align-items:baseline;gap:18px;margin-bottom:30px}
+  .sec-num{font-family:var(--mono);font-size:13px;color:var(--brass);font-weight:700;
+    letter-spacing:.1em;padding-top:6px;flex:none}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+  @media(max-width:760px){.twocol{grid-template-columns:1fr;gap:24px}}
+
+  /* ---------- instrument panel (the dark scope) ---------- */
+  .instrument{
+    background:var(--slate);border-radius:14px;padding:22px;
+    box-shadow:0 1px 0 #fff inset, 0 18px 44px -22px rgba(20,23,27,.7);
+    border:1px solid #0c0e11;position:relative;overflow:hidden;
+  }
+  .instrument::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(120% 90% at 50% -10%,rgba(255,255,255,.05),transparent 60%)}
+  .inst-label{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+    color:#7c848d;display:flex;justify-content:space-between;align-items:center;gap:12px;
+    height:18px;margin-bottom:14px}
+  .inst-label span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .inst-label span:last-child{flex:none;text-align:right}
+  .inst-label .dot{color:var(--motor-glow)}
+  canvas{display:block;width:100%;height:auto;touch-action:none}
+
+  /* live readout */
+  .readout{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#0c0e11;
+    border-radius:9px;overflow:hidden;margin-top:16px;border:1px solid #0c0e11}
+  .readout div{background:var(--slate-2);padding:12px 14px}
+  .readout .k{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#7c848d}
+  .readout .v{font-family:var(--mono);font-size:1.5rem;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums}
+  .v.j1{color:var(--motor-glow)} .v.j2{color:var(--wall-glow)} .v.out{color:var(--output-glow)}
+
+  .eqline{font-family:var(--mono);text-align:center;color:#aeb4bb;margin-top:14px;font-size:1.05rem;
+    font-variant-numeric:tabular-nums;letter-spacing:.01em}
+  .eqline b{font-weight:700}
+
+  /* controls */
+  .controls{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;margin-top:18px}
+  .ctl{display:flex;flex-direction:column;gap:6px;flex:1 1 200px}
+  .ctl label{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#7c848d}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:3px;
+    background:#3a4046;outline:none;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--motor-glow);border:2px solid #0c0e11;box-shadow:0 0 0 3px rgba(79,211,137,.2)}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--motor-glow);
+    border:2px solid #0c0e11}
+  input[type=range].gap::-webkit-slider-thumb{background:var(--brass);box-shadow:0 0 0 3px rgba(194,145,58,.22)}
+  input[type=range].gap::-moz-range-thumb{background:var(--brass)}
+  input:focus-visible{box-shadow:0 0 0 3px rgba(98,168,242,.5)}
+  .btn{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    background:transparent;color:#cfd4da;border:1px solid #3a4046;border-radius:7px;padding:9px 16px;
+    cursor:pointer;transition:border-color .15s,color .15s}
+  .btn:hover{border-color:var(--motor-glow);color:var(--motor-glow)}
+  .btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(98,168,242,.5)}
+  .btn.primary{border-color:var(--motor-glow);color:var(--motor-glow)}
+
+  .hint{font-family:var(--mono);font-size:11px;color:#6c747c;letter-spacing:.04em;margin-top:14px;
+    display:flex;align-items:center;gap:8px}
+  .hint kbd{background:#262c33;border:1px solid #3a4046;border-radius:4px;padding:1px 7px;color:#aeb4bb}
+
+  /* legend chips */
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;
+    color:#9aa1a8;letter-spacing:.04em;margin-top:14px}
+  .legend span{display:flex;align-items:center;gap:7px}
+  .swatch{width:16px;height:3px;border-radius:2px;display:inline-block}
+
+  /* ---------- reversal sequence ---------- */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:8px}
+  @media(max-width:760px){.steps{grid-template-columns:1fr}}
+  .step{background:var(--vellum-2);border:1px solid var(--line);border-radius:11px;padding:20px;
+    cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s;text-align:left;font:inherit;color:inherit}
+  .step:hover{border-color:var(--brass);transform:translateY(-2px);box-shadow:0 12px 28px -20px rgba(0,0,0,.4)}
+  .step:focus-visible{outline:none;border-color:var(--output);box-shadow:0 0 0 3px rgba(59,130,214,.25)}
+  .step.active{border-color:var(--brass);box-shadow:0 0 0 1px var(--brass) inset}
+  .step .n{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--brass);letter-spacing:.08em}
+  .step h3{margin:10px 0 8px;font-size:.92rem}
+  .step p{font-size:.95rem;margin:0;color:var(--ink-soft)}
+
+  /* ---------- callout ---------- */
+  .callout{background:var(--slate);color:#d8dce1;border-radius:14px;padding:30px 34px;
+    border-left:4px solid var(--wall)}
+  .callout h3{color:var(--wall-glow)}
+  .callout p{color:#c2c8cf;max-width:62ch}
+  .callout code{font-family:var(--mono);color:var(--motor-glow);font-size:.92em}
+
+  /* ---------- code figure ---------- */
+  figure.code{margin:0;background:var(--slate);border-radius:14px;overflow:hidden;border:1px solid #0c0e11}
+  figure.code figcaption{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+    color:#7c848d;padding:14px 20px;border-bottom:1px solid #262c33;display:flex;justify-content:space-between}
+  pre{margin:0;padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.75;color:#cfd4da}
+  .c-tag{color:#62A8F2}.c-attr{color:var(--brass)}.c-str{color:var(--motor-glow)}.c-com{color:#5d646c;font-style:italic}
+  .c-hl{background:rgba(214,68,46,.14);display:inline-block;width:100%}
+
+  /* ---------- table ---------- */
+  table{width:100%;border-collapse:collapse;font-size:.95rem}
+  th,td{text-align:left;padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:500}
+  td:first-child{font-family:var(--mono);font-weight:700;white-space:nowrap}
+
+  footer{border-top:1px solid var(--line);padding:40px 0 70px;font-family:var(--mono);font-size:12px;
+    color:var(--ink-soft);letter-spacing:.04em}
+
+  /* reveal */
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.in{opacity:1;transform:none}
+  @media(prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    .reveal{opacity:1;transform:none;transition:none}
+    .step{transition:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="masthead-meta reveal">
+      <span>MuJoCo · Mechanism Modeling</span>
+      <span>Interactive figure · 1 DOF</span>
+    </div>
+    <h1 class="reveal">Gear backlash</h1>
+    <p class="abstract reveal">An interactive model of geartrain lost motion: the clearance
+      between meshing teeth that lets the input rotate while the output stays fixed, until the
+      play is taken up and contact resumes.</p>
+  </div>
+</header>
+
+<!-- ============ THE BENCH (signature) ============ -->
+<section id="bench">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div>
+        <h2>The bench</h2>
+        <p style="margin:0;color:var(--ink-soft)">Drag the motor. Watch the output freeze on every reversal. Set the gap to 0 for the ideal, no-slop case.</p>
+      </div>
+    </div>
+
+    <!-- nomenclature: define J1, J2, output and their real-robot meaning -->
+    <dl class="nomen reveal">
+      <div class="term" style="--c:var(--motor)">
+        <dt>J1 — drive</dt>
+        <dd><b>The motor shaft.</b> The commanded position, after the gearbox. This is what a
+          motor-side encoder reads. The actuator acts here.</dd>
+      </div>
+      <div class="term" style="--c:var(--wall)">
+        <dt>J2 — play</dt>
+        <dd><b>The gear clearance.</b> Not a real pivot — a fictitious free joint that lumps the
+          transmission's slop, bounded to <span class="mono">|J2| ≤ gap/2</span>. The lost motion.</dd>
+      </div>
+      <div class="term" style="--c:var(--output)">
+        <dt>J1 + J2 — output</dt>
+        <dd><b>The true link angle.</b> Where the finger segment actually points; what a joint-side
+          encoder reads. The motor only knows J1, so the play is hidden.</dd>
+      </div>
+    </dl>
+
+    <div class="twocol reveal">
+      <!-- mechanism scope -->
+      <div class="instrument">
+        <div class="inst-label"><span>Peg-in-slot · 1 DOF slider</span><span class="dot" id="contactLabel">● no contact</span></div>
+        <canvas id="benchcv" width="900" height="460" aria-label="Animated peg-in-slot backlash mechanism"></canvas>
+        <div class="legend">
+          <span><i class="swatch" style="background:var(--steel)"></i>slot · motor shaft (J1)</span>
+          <span><i class="swatch" style="background:var(--output-glow)"></i>peg · link (J1+J2)</span>
+          <span><i class="swatch" style="background:var(--motor-glow);height:0;border-top:2px dashed var(--motor-glow)"></i>ghost · ideal, no slop</span>
+          <span><i class="swatch" style="background:var(--wall-glow)"></i>tooth-flank contact</span>
+        </div>
+      </div>
+
+      <!-- readouts + hysteresis + controls -->
+      <div class="instrument">
+        <div class="inst-label"><span>Hysteresis · output vs. motor</span><span id="modeLabel">manual</span></div>
+        <canvas id="scope" width="900" height="340" aria-label="Hysteresis loop of output versus motor position"></canvas>
+
+        <div class="readout">
+          <div><div class="k">Motor · J1</div><div class="v j1" id="rJ1">+0.00</div></div>
+          <div><div class="k">Play · J2</div><div class="v j2" id="rJ2">+0.00</div></div>
+          <div><div class="k">Output</div><div class="v out" id="rOut">+0.00</div></div>
+        </div>
+        <div class="eqline"><b style="color:var(--output-glow)" id="eOut">+0.00</b> =
+          <b style="color:var(--motor-glow)" id="eJ1">+0.00</b> +
+          <b style="color:var(--wall-glow)" id="eJ2">+0.00</b></div>
+
+        <div class="controls">
+          <div class="ctl">
+            <label for="motor">Motor position — J1</label>
+            <input id="motor" class="motor" type="range" min="-1.8" max="1.8" step="0.001" value="0">
+          </div>
+          <div class="ctl" style="flex:0 1 150px">
+            <label for="gap">Gap (rad)</label>
+            <input id="gap" class="gap" type="range" min="0" max="1.4" step="0.01" value="1.0">
+          </div>
+        </div>
+        <div class="controls" style="margin-top:6px">
+          <button class="btn primary" id="sweep">▶ Auto-sweep</button>
+          <button class="btn" id="reset">↺ Clear trace</button>
+        </div>
+        <div class="hint">Drag the slot directly, use the slider, or focus it and press <kbd>←</kbd> <kbd>→</kbd>.</div>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+(()=>{
+  "use strict";
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---- shared state ----
+  const S = { x1:0, out:0, gap:1.0, MIN:-1.8, MAX:1.8 };
+  const trace = [];                 // {x1,out}
+  const update = ()=>{              // quasi-static: clamp output into reachable band
+    const half = S.gap/2;
+    S.out = Math.min(Math.max(S.out, S.x1-half), S.x1+half);
+  };
+
+  // ---- DOM ----
+  const $ = id=>document.getElementById(id);
+  const motor=$("motor"), gapEl=$("gap");
+  const rJ1=$("rJ1"),rJ2=$("rJ2"),rOut=$("rOut"),eJ1=$("eJ1"),eJ2=$("eJ2"),eOut=$("eOut");
+  const contactLabel=$("contactLabel"), modeLabel=$("modeLabel");
+  const fmt=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(2);
+
+  // ---- canvas setup w/ DPR ----
+  function setup(cv,cssH){
+    const dpr=Math.min(devicePixelRatio||1,2);
+    const w=cv.clientWidth||cv.parentElement.clientWidth-44;
+    cv.width=w*dpr; cv.height=cssH*dpr; cv.style.height=cssH+"px";
+    const ctx=cv.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {ctx,w,h:cssH};
+  }
+  const bench=$("benchcv"), scope=$("scope");
+  let B,SC;
+  function resize(){ B=setup(bench,230); SC=setup(scope,200); draw(); }
+
+  // ---- bench drawing ----
+  function draw(){
+    if(!B) return;
+    const {ctx,w,h}=B;
+    ctx.clearRect(0,0,w,h);
+    // scope grid
+    ctx.strokeStyle="#222830"; ctx.lineWidth=1;
+    for(let gx=0;gx<=w;gx+=w/12){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,h);ctx.stroke();}
+    for(let gy=0;gy<=h;gy+=h/6){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(w,gy);ctx.stroke();}
+
+    const cx=w/2, midY=h*0.46, SCALE=(w*0.40)/ (S.MAX+0.6);
+    const X = v=> cx + v*SCALE;
+    const half=S.gap/2;
+    const pegW=42, wallT=10;
+    const slotHalf = half*SCALE + pegW/2 + 4;   // interior half-length
+    const pegH=68, slotH=92;
+
+    // baseline
+    ctx.strokeStyle="#2c333b";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,midY+slotH/2+1);ctx.lineTo(w,midY+slotH/2+1);ctx.stroke();
+
+    // motor slot (steel channel) centered at x1
+    const sx=X(S.x1);
+    const grad=ctx.createLinearGradient(0,midY-slotH/2,0,midY+slotH/2);
+    grad.addColorStop(0,"#7a8088");grad.addColorStop(1,"#4a5057");
+    ctx.fillStyle=grad;
+    // floor + two walls
+    ctx.fillRect(sx-slotHalf, midY+slotH/2-wallT, slotHalf*2, wallT);
+    const lWall=sx-slotHalf, rWall=sx+slotHalf-wallT;
+
+    // contact detection (ideal = zero gap: rigid, no play, no "contact" flagging)
+    const x2 = S.out - S.x1;
+    const ideal = S.gap < 1e-4;
+    const touchR = !ideal && (half - x2) < 1e-3, touchL = !ideal && (x2 + half) < 1e-3;
+    ctx.fillStyle=touchL?"#FF6B52":grad;
+    ctx.fillRect(lWall, midY-slotH/2, wallT, slotH);
+    ctx.fillStyle=touchR?"#FF6B52":grad; ctx.fillRect(rWall, midY-slotH/2, wallT, slotH);
+
+    // ideal ghost peg (green dashed outline at x1)
+    const gx=X(S.x1);
+    ctx.save();ctx.setLineDash([6,5]);ctx.strokeStyle="#4FD389";ctx.lineWidth=2;
+    ctx.strokeRect(gx-pegW/2, midY-pegH/2, pegW, pegH);ctx.restore();
+
+    // peg (output, blue) at out
+    const ox=X(S.out);
+    const pg=ctx.createLinearGradient(0,midY-pegH/2,0,midY+pegH/2);
+    pg.addColorStop(0,"#62A8F2");pg.addColorStop(1,"#3B82D6");
+    ctx.fillStyle=pg;
+    rrect(ctx,ox-pegW/2,midY-pegH/2,pegW,pegH,5);ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="700 11px 'JetBrains Mono'";ctx.textAlign="center";
+    ctx.fillText("PEG",ox,midY+4);
+
+    // motor marker (green triangle + stem) below
+    const my=midY+slotH/2+26;
+    ctx.fillStyle="#27A35A";ctx.strokeStyle="#27A35A";ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(sx,my-12);ctx.lineTo(sx-7,my-2);ctx.lineTo(sx+7,my-2);ctx.closePath();ctx.fill();
+    ctx.beginPath();ctx.moveTo(sx,my-2);ctx.lineTo(sx,my+10);ctx.stroke();
+    ctx.fillStyle="#4FD389";ctx.font="500 11px 'JetBrains Mono'";ctx.textAlign="center";
+    ctx.fillText("motor J1",sx,my+26);
+
+    // gap braces (peg edge -> inner wall), red
+    const innerL=lWall+wallT, innerR=rWall;
+    drawGap(ctx, innerL, ox-pegW/2, midY-pegH/2-16, "#D6442E");
+    drawGap(ctx, ox+pegW/2, innerR, midY-pegH/2-16, "#D6442E");
+
+    // contact label
+    contactLabel.textContent = ideal ? "◇ rigid — no backlash"
+      : touchL?"● wall contact (left)":touchR?"● wall contact (right)":"○ no contact — coasting";
+    contactLabel.style.color = (touchL||touchR)?"#FF6B52":ideal?"#4FD389":"#7c848d";
+
+    drawScope();
+    syncReadout();
+  }
+  function drawGap(ctx,a,b,y,col){
+    if(b-a<2)return;
+    ctx.strokeStyle=col;ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.moveTo(a,y);ctx.lineTo(b,y);
+    ctx.moveTo(a,y-4);ctx.lineTo(a,y+4);ctx.moveTo(b,y-4);ctx.lineTo(b,y+4);ctx.stroke();
+  }
+  function rrect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+  // ---- hysteresis scope ----
+  function drawScope(){
+    if(!SC)return;
+    const {ctx,w,h}=SC;
+    ctx.clearRect(0,0,w,h);
+    const pad=26, R=S.MAX+0.2;
+    const X=v=>pad+(v+R)/(2*R)*(w-2*pad);
+    const Y=v=>h-pad-(v+R)/(2*R)*(h-2*pad);
+    // grid
+    ctx.strokeStyle="#222830";ctx.lineWidth=1;
+    for(let i=-1.5;i<=1.5;i+=0.5){ctx.beginPath();ctx.moveTo(X(i),pad);ctx.lineTo(X(i),h-pad);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(pad,Y(i));ctx.lineTo(w-pad,Y(i));ctx.stroke();}
+    // reachable band
+    const half=S.gap/2;
+    ctx.fillStyle="rgba(59,130,214,.10)";
+    ctx.beginPath();ctx.moveTo(X(-R),Y(-R-half));ctx.lineTo(X(R),Y(R-half));
+    ctx.lineTo(X(R),Y(R+half));ctx.lineTo(X(-R),Y(-R+half));ctx.closePath();ctx.fill();
+    // ideal diagonal
+    ctx.strokeStyle="#27A35A";ctx.setLineDash([6,5]);ctx.lineWidth=1.6;
+    ctx.beginPath();ctx.moveTo(X(-R),Y(-R));ctx.lineTo(X(R),Y(R));ctx.stroke();ctx.setLineDash([]);
+    // trace
+    if(trace.length>1){
+      ctx.strokeStyle="#62A8F2";ctx.lineWidth=2.4;ctx.lineJoin="round";
+      ctx.beginPath();ctx.moveTo(X(trace[0].x1),Y(trace[0].out));
+      for(const p of trace)ctx.lineTo(X(p.x1),Y(p.out));ctx.stroke();
+    }
+    // current point
+    ctx.fillStyle="#FF6B52";ctx.beginPath();ctx.arc(X(S.x1),Y(S.out),4.5,0,7);ctx.fill();
+    // axis labels
+    ctx.fillStyle="#6c747c";ctx.font="500 10px 'JetBrains Mono'";ctx.textAlign="center";
+    ctx.fillText("motor J1 →",w/2,h-6);
+    ctx.save();ctx.translate(11,h/2);ctx.rotate(-Math.PI/2);ctx.fillText("output →",0,0);ctx.restore();
+  }
+
+  function syncReadout(){
+    const x2=S.out-S.x1;
+    rJ1.textContent=fmt(S.x1); rJ2.textContent=fmt(x2); rOut.textContent=fmt(S.out);
+    eJ1.textContent=fmt(S.x1); eJ2.textContent=fmt(x2); eOut.textContent=fmt(S.out);
+  }
+
+  // ---- record trace on change ----
+  function commit(record=true){
+    update();
+    if(record){
+      const last=trace[trace.length-1];
+      if(!last || Math.abs(last.x1-S.x1)>0.004 || Math.abs(last.out-S.out)>0.004)
+        trace.push({x1:S.x1,out:S.out});
+      if(trace.length>4000)trace.shift();
+    }
+    draw();
+  }
+
+  // ---- inputs ----
+  motor.addEventListener("input",e=>{S.x1=+e.target.value;commit();});
+  gapEl.addEventListener("input",e=>{S.gap=+e.target.value;commit(false);});
+  $("reset").addEventListener("click",()=>{trace.length=0;draw();});
+
+  // drag directly on bench
+  let dragging=false;
+  function benchToX1(clientX){
+    const r=bench.getBoundingClientRect();
+    const cx=r.width/2, SCALE=(r.width*0.40)/(S.MAX+0.6);
+    let v=(clientX-r.left-cx)/SCALE;
+    return Math.max(S.MIN,Math.min(S.MAX,v));
+  }
+  bench.addEventListener("pointerdown",e=>{dragging=true;bench.setPointerCapture(e.pointerId);
+    S.x1=benchToX1(e.clientX);motor.value=S.x1;commit();});
+  bench.addEventListener("pointermove",e=>{if(!dragging)return;S.x1=benchToX1(e.clientX);motor.value=S.x1;commit();});
+  bench.addEventListener("pointerup",()=>dragging=false);
+  bench.style.cursor="ew-resize";
+
+  // auto-sweep
+  let sweeping=false, t=0, raf=null;
+  const sweepBtn=$("sweep");
+  function loop(){
+    t+=0.018; S.x1=1.6*Math.sin(t); motor.value=S.x1; commit();
+    if(t>2*Math.PI*1.5){stopSweep();return;}
+    raf=requestAnimationFrame(loop);
+  }
+  function startSweep(){trace.length=0;t=0;sweeping=true;modeLabel.textContent="auto-sweep";
+    sweepBtn.textContent="■ Stop";loop();}
+  function stopSweep(){sweeping=false;cancelAnimationFrame(raf);modeLabel.textContent="manual";sweepBtn.textContent="▶ Auto-sweep";}
+  sweepBtn.addEventListener("click",()=>sweeping?stopSweep():startSweep());
+
+  // reveal on scroll
+  const io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){en.target.classList.add("in");io.unobserve(en.target);}}),{threshold:.12});
+  document.querySelectorAll(".reveal").forEach((el,i)=>{el.style.transitionDelay=(Math.min(i,4)*60)+"ms";io.observe(el);});
+
+  addEventListener("resize",resize);
+  resize();
+})();
+</script>
+</body>
+</html>
