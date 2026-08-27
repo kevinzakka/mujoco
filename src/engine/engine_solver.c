@@ -2215,11 +2215,83 @@ static void FactorizeHessian(mjData* d, mjPrimalContext* ctx, int flg_recompute)
 }
 
 
+// cone contacts above which one refactorization beats sum(dim) rank-1 updates
+#define mjCONE_FOLD 24
+
+// elliptic sparse case with many cones: rebuild Lcone with one factorization.
+// A cone contact adds Jc'*Hc*Jc = (Lc'*Jc)'*(Lc'*Jc) to the Hessian, so with
+// its Jacobian rows replaced by Lc'*Jc and their D set to 1, the standard
+// J'*D*J kernel produces the cone-inclusive Hessian with unchanged sparsity.
+static void HessianConeFolded(mjData* d, mjPrimalContext* ctx) {
+  int nv = ctx->nv, nefc = ctx->nefc;
+  mjtNum local[36];
+
+  mj_markStack(d);
+  mjtNum* Jmod   = mjSTACKALLOC(d, ctx->nJ, mjtNum);
+  mjtNum* JTmod  = mjSTACKALLOC(d, ctx->nJ, mjtNum);
+  mjtNum* Dmod   = mjSTACKALLOC(d, nefc, mjtNum);
+  mjtNum* Hcone  = mjSTACKALLOC(d, ctx->nH, mjtNum);
+  int* JT_rownnz = mjSTACKALLOC(d, nv, int);
+  int* JT_rowadr = mjSTACKALLOC(d, nv, int);
+  int* JT_colind = mjSTACKALLOC(d, ctx->nJ, int);
+
+  mju_copy(Jmod, ctx->J, ctx->nJ);
+  for (int i=0; i < nefc; i++) {
+    Dmod[i] = ctx->efc_state[i] == mjCNSTRSTATE_QUADRATIC ? ctx->efc_D[i] : 0;
+  }
+
+  // replace cone contact rows with Lc'*Jc, where Hc = Lc*Lc'
+  for (int i=0; i < nefc; i++) {
+    if (ctx->efc_state[i] == mjCNSTRSTATE_CONE) {
+      int dim = ctx->contact[ctx->efc_id[i]].dim;
+      mju_copy(local, ctx->contact[ctx->efc_id[i]].H, dim*dim);
+      mju_cholFactor(local, dim, mjMINVAL);
+
+      const int nnz = ctx->J_rownnz[i];
+      for (int c=0; c < dim; c++) {
+        mjtNum* dst = Jmod + ctx->J_rowadr[i+c];
+        mju_zero(dst, nnz);
+        for (int r=c; r < dim; r++) {
+          mju_addToScl(dst, ctx->J + ctx->J_rowadr[i+r], local[r*dim+c], nnz);
+        }
+        Dmod[i+c] = 1;
+      }
+      ctx->nupdate += dim;
+      i += (dim-1);
+    }
+  }
+
+  // Lcone = chol(Jmod'*Dmod*Jmod + M), same sparsity as L
+  mju_transposeSparse(JTmod, Jmod, nefc, nv, JT_rownnz, JT_rowadr, JT_colind, NULL,
+                      ctx->J_rownnz, ctx->J_rowadr, ctx->J_colind);
+  mju_sqrMatTDSparseNumeric(Hcone, nv, ctx->H_rownnz, ctx->H_rowadr, ctx->H_colind, NULL,
+                            Jmod, ctx->J_rownnz, ctx->J_rowadr, ctx->J_colind,
+                            JTmod, JT_rownnz, JT_rowadr, JT_colind,
+                            ctx->JT_rowsuper, Dmod, d);
+  mju_addToMatSparse(Hcone, ctx->H_rownnz, ctx->H_rowadr, ctx->H_colind, nv,
+                     ctx->M, ctx->M_rownnz, ctx->M_rowadr, ctx->M_colind);
+  if (mju_cholFactorNumeric(ctx->Lcone, nv, mjMINVAL,
+                            ctx->L_rownnz, ctx->L_rowadr, ctx->L_colind,
+                            ctx->LT_rownnz, ctx->LT_rowadr, ctx->LT_colind, ctx->LT_map,
+                            Hcone, ctx->H_rownnz, ctx->H_rowadr, ctx->H_colind, d) != nv) {
+    mjERROR("rank-deficient cone Hessian");
+  }
+
+  mj_freeStack(d);
+}
+
+
 // elliptic case: Hcone = H + cone_contributions
 static void HessianCone(mjData* d, mjPrimalContext* ctx) {
   int nv = ctx->nv, nefc = ctx->nefc;
   mjtNum* LTJ = ctx->LTJ;
   mjtNum local[36];
+
+  // many cones in sparse mode: one refactorization beats sum(dim) rank-1 updates
+  if (ctx->is_sparse && ctx->ncone > mjCONE_FOLD) {
+    HessianConeFolded(d, ctx);
+    return;
+  }
 
   // start with Hcone = H
   mju_copy(ctx->Lcone, ctx->L, ctx->nL);
